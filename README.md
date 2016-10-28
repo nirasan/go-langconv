@@ -1,6 +1,6 @@
 # langconv
 
-langconv generate client side source code from golang source code.
+langconv convert golang source code into client side source code.
 
 ## Install
 
@@ -18,7 +18,7 @@ langconv -f {GOLANG_FILENAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
 
 ### Golang source code
 
-```go:sample.go
+```go
 package main
 
 const (
@@ -35,7 +35,7 @@ type User struct {
 
 ### Config file for C#
 
-```toml:config.toml
+```toml
 ConstTemplate = '''
 public static partial class Constant
 {
