@@ -33,7 +33,7 @@ type User struct {
 }
 ```
 
-### Config file for C#
+### Config file for C Sharp
 
 ```toml
 ConstTemplate = '''
