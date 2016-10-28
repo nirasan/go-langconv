@@ -1,0 +1,29 @@
+ConstTemplate = '''
+public static partial class Constant
+{
+{{ range . -}}
+{{ "    " -}} public const {{ typeconv .Type }} {{ .Name }} = {{ .Value }};
+{{ end -}}
+}
+'''
+
+StructTemplate = '''
+public class {{ .Name }}
+{
+{{ range .Fields -}}
+{{ "    " -}} public {{ typeconv .Type }} {{ .Name }};
+{{ end -}}
+}
+'''
+
+[Typemap]
+int = "int"
+int32 = "int"
+int64 = "long"
+uint = "uint"
+uint32 = "uint"
+uint64 = "ulong"
+float32 = "float"
+float64 = "double"
+string = "string"
+bool = "bool"
