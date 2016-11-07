@@ -16,8 +16,13 @@ func TranslateStruct(s *StructDecl, tmpltext string, typemap map[string]string) 
 
 func translateBase(data interface{}, tmpltext string, typemap map[string]string) string {
 	tmpl := template.Must(template.New("").Funcs(template.FuncMap{
-		"typeconv": func(s string) string {
-			return typemap[s]
+		"typeconv": func(t string) string {
+			v, ok := typemap[t]
+			if ok {
+				return v
+			} else {
+				return t
+			}
 		},
 	}).Parse(tmpltext))
 	var buf bytes.Buffer

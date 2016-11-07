@@ -9,4 +9,5 @@ const (
 type User struct {
 	Username string
 	Age      int
+	Parent   User
 }
