@@ -5,13 +5,13 @@ langconv convert golang source code into client side source code.
 ## Install
 
 ```
-go install github.com/nirasan/langconv
+go install github.com/nirasan/go-langconv
 ```
 
 ## How to use
 
 ```
-langconv -f {GOLANG_FILENAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
+go-langconv -f {GOLANG_FILENAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
 ```
 
 ## Example
@@ -70,7 +70,7 @@ bool = "bool"
 ### Run command
 
 ```
-langconv -f sample.go -c config.toml -o sample.cs
+go-langconv -f sample.go -c config.toml -o sample.cs
 ```
 
 ### Output file
