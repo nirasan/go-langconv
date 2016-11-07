@@ -51,8 +51,9 @@ func TestTranslateStruct(t *testing.T) {
 	s := &StructDecl{
 		Name: "User",
 		Fields: []StructDeclField{
-			StructDeclField{Name: "Username", Type: "string"},
-			StructDeclField{Name: "Age", Type: "int64"},
+			StructDeclField{Name: "Username", Type: "string", IsArray: false},
+			StructDeclField{Name: "Age", Type: "int64", IsArray: false},
+			StructDeclField{Name: "Sights", Type: "float32", IsArray: true},
 		},
 	}
 
@@ -60,7 +61,7 @@ func TestTranslateStruct(t *testing.T) {
 public class {{ .Name }}
 {
 {{ range .Fields -}}
-{{ "    " -}} public {{ typeconv .Type }} {{ .Name }};
+{{ "    " -}} public {{ typeconv .Type }} {{- if .IsArray -}} [] {{- end }} {{ .Name }};
 {{ end -}}
 }
 `
@@ -72,6 +73,7 @@ public class User
 {
     public string Username;
     public long Age;
+    public float[] Sights;
 }
 `
 	if out != expect {

@@ -63,6 +63,7 @@ type User struct {
   Age int32
   Email string
   EmailVerification bool
+  Sights []float32
 }
 `
 	fset := token.NewFileSet()
@@ -71,7 +72,7 @@ type User struct {
 		t.Fatal(err.Error())
 	}
 
-	// ast.Print(fset, f)
+	//ast.Print(fset, f)
 
 	var sd *StructDecl
 	sd = NewStructDecl(f.Decls[0])
@@ -83,13 +84,15 @@ type User struct {
 		t.Error("invalid name", sd.Name)
 	}
 	samples := []struct {
-		Name string
-		Type string
+		Name    string
+		Type    string
+		IsArray bool
 	}{
-		{"Username", "string"},
-		{"Age", "int32"},
-		{"Email", "string"},
-		{"EmailVerification", "bool"},
+		{"Username", "string", false},
+		{"Age", "int32", false},
+		{"Email", "string", false},
+		{"EmailVerification", "bool", false},
+		{"Sights", "float32", true},
 	}
 	for i, sample := range samples {
 		if sd.Fields[i].Name != sample.Name || sd.Fields[i].Type != sample.Type {

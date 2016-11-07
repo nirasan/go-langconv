@@ -9,7 +9,7 @@ public class Constant {
 StructTemplate = '''
 public class {{ .Name }} {
 {{ range .Fields -}}
-{{ "    " -}} public {{ typeconv .Type }} {{ .Name }};
+{{ "    " -}} public {{ typeconv .Type }} {{- if .IsArray -}} [] {{- end }} {{ .Name }};
 {{ end -}}
 }
 '''

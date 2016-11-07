@@ -10,4 +10,10 @@ type User struct {
 	Username string
 	Age      int
 	Parent   User
+	Items    []Item
+}
+
+type Item struct {
+	Name   string
+	Amount int
 }

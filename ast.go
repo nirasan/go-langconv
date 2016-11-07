@@ -47,8 +47,9 @@ type StructDecl struct {
 }
 
 type StructDeclField struct {
-	Name string
-	Type string
+	Name    string
+	Type    string
+	IsArray bool
 }
 
 func NewStructDecl(decl ast.Decl) *StructDecl {
@@ -71,7 +72,13 @@ func NewStructDecl(decl ast.Decl) *StructDecl {
 	for _, f := range t.Fields.List {
 		sdf := StructDeclField{
 			Name: f.Names[0].Name,
-			Type: f.Type.(*ast.Ident).Name,
+		}
+		switch ft := f.Type.(type) {
+		case *ast.Ident:
+			sdf.Type = ft.Name
+		case *ast.ArrayType:
+			sdf.IsArray = true
+			sdf.Type = ft.Elt.(*ast.Ident).Name
 		}
 		sd.Fields = append(sd.Fields, sdf)
 	}
