@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"bufio"
+
 	"github.com/naoina/toml"
 )
 
@@ -27,7 +28,7 @@ func main() {
 	flag.Parse()
 	config := loadConfig()
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, *fFlag, nil, 0)
+	f, err := parser.ParseFile(fset, *fFlag, nil, parser.ParseComments)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -42,12 +43,18 @@ func main() {
 		switch tdecl.Tok {
 		case token.CONST:
 			cd := NewConstDecl(decl)
+			if cd == nil {
+				continue
+			}
 			s := TranslateConst(cd, config.ConstTemplate, config.Typemap)
 			if _, e := w.WriteString(s); e != nil {
 				log.Fatal(e)
 			}
 		case token.TYPE:
 			sd := NewStructDecl(decl)
+			if sd == nil {
+				continue
+			}
 			s := TranslateStruct(sd, config.StructTemplate, config.Typemap)
 			if _, e := w.WriteString(s); e != nil {
 				log.Fatal(e)

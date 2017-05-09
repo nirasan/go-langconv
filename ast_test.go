@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go/ast"
 	"go/parser"
 	"go/token"
 	"testing"
@@ -9,27 +10,30 @@ import (
 func TestNewConstDecl(t *testing.T) {
 	src := `
 package main
+// +langconv
 const (
 	CONST_INT int32 = 1
 	CONST_STRING string = "hello"
 )
+// +langconv
 const CONST_SINGLE bool = true
+// +langconv
 var VAR1 = 1
 `
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, 0)
+	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	// ast.Print(fset, f)
+	ast.Print(fset, f)
 
 	var cds []*ConstDecl
 	var cd *ConstDecl
 
 	cds = NewConstDecl(f.Decls[0])
 	if len(cds) != 2 {
-		t.Error("invalid length", len(cds))
+		t.Fatal("invalid length", len(cds))
 	}
 	cd = cds[0]
 	if cd.Name != "CONST_INT" || cd.Type != "int32" || cd.Value != "1" {
@@ -42,7 +46,7 @@ var VAR1 = 1
 
 	cds = NewConstDecl(f.Decls[1])
 	if len(cds) != 1 {
-		t.Error("invalid length", len(cds))
+		t.Fatal("invalid length", len(cds))
 	}
 	cd = cds[0]
 	if cd.Name != "CONST_SINGLE" || cd.Type != "bool" || cd.Value != "true" {
@@ -58,6 +62,7 @@ var VAR1 = 1
 func TestNewStructDecl(t *testing.T) {
 	src := `
 package main
+// +langconv
 type User struct {
   Username string
   Age int32
@@ -67,18 +72,18 @@ type User struct {
 }
 `
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, "", src, 0)
+	f, err := parser.ParseFile(fset, "", src, parser.ParseComments)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
 
-	//ast.Print(fset, f)
+	ast.Print(fset, f)
 
 	var sd *StructDecl
 	sd = NewStructDecl(f.Decls[0])
 
 	if sd == nil {
-		t.Error("cast error")
+		t.Fatal("parse error")
 	}
 	if sd.Name != "User" {
 		t.Error("invalid name", sd.Name)
