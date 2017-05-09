@@ -8,15 +8,20 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"bufio"
 
 	"github.com/naoina/toml"
 )
 
-var fFlag = flag.String("f", "", "source file")
-var cFlag = flag.String("c", "", "config file")
-var oFlag = flag.String("o", "", "output file")
+var dirFlag = flag.String("d", "", "source dir")
+var configFlag = flag.String("c", "", "config file")
+var outputFlag = flag.String("o", "", "output file")
+
+var constDeclList [][]*ConstDecl
+var structDeclList []*StructDecl
 
 type Config struct {
 	ConstTemplate  string
@@ -26,15 +31,48 @@ type Config struct {
 
 func main() {
 	flag.Parse()
+
+	// load config
 	config := loadConfig()
+
+	// parse go files
+	constDeclList = [][]*ConstDecl{}
+	structDeclList = []*StructDecl{}
+	filepath.Walk(*dirFlag, walker)
+
+	// write output file
+	fp := newFile(*outputFlag)
+	defer fp.Close()
+	w := bufio.NewWriter(fp)
+
+	for i := len(constDeclList) - 1; i >= 0; i-- {
+		cd := constDeclList[i]
+		s := TranslateConst(cd, config.ConstTemplate, config.Typemap)
+		if _, e := w.WriteString(s); e != nil {
+			log.Fatal(e)
+		}
+	}
+
+	for i := len(structDeclList) - 1; i >= 0; i-- {
+		sd := structDeclList[i]
+		s := TranslateStruct(sd, config.StructTemplate, config.Typemap)
+		if _, e := w.WriteString(s); e != nil {
+			log.Fatal(e)
+		}
+	}
+
+	w.Flush()
+}
+
+func walker(path string, info os.FileInfo, err error) error {
+	if info.IsDir() || !strings.HasSuffix(info.Name(), ".go") {
+		return nil
+	}
 	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, *fFlag, nil, parser.ParseComments)
+	f, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	fp := newFile(*oFlag)
-	defer fp.Close()
-	w := bufio.NewWriter(fp)
 	for _, decl := range f.Decls {
 		tdecl, ok := decl.(*ast.GenDecl)
 		if !ok {
@@ -42,30 +80,20 @@ func main() {
 		}
 		switch tdecl.Tok {
 		case token.CONST:
-			cd := NewConstDecl(decl)
-			if cd == nil {
-				continue
-			}
-			s := TranslateConst(cd, config.ConstTemplate, config.Typemap)
-			if _, e := w.WriteString(s); e != nil {
-				log.Fatal(e)
+			if cd := NewConstDecl(decl); cd != nil {
+				constDeclList = append(constDeclList, cd)
 			}
 		case token.TYPE:
-			sd := NewStructDecl(decl)
-			if sd == nil {
-				continue
-			}
-			s := TranslateStruct(sd, config.StructTemplate, config.Typemap)
-			if _, e := w.WriteString(s); e != nil {
-				log.Fatal(e)
+			if sd := NewStructDecl(decl); sd != nil {
+				structDeclList = append(structDeclList, sd)
 			}
 		}
 	}
-	w.Flush()
+	return nil
 }
 
 func loadConfig() Config {
-	confData, err := os.Open(*cFlag)
+	confData, err := os.Open(*configFlag)
 	if err != nil {
 		panic(err)
 	}

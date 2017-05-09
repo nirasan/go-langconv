@@ -11,7 +11,7 @@ go install github.com/nirasan/go-langconv
 ## How to use
 
 ```
-go-langconv -f {GOLANG_FILENAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
+go-langconv -d {DIRNAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
 ```
 
 ## Example
@@ -21,12 +21,14 @@ go-langconv -f {GOLANG_FILENAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
 ```go
 package main
 
+// +langconv
 const (
 	CONST1 int32   = 1
 	CONST2 string  = "hello hello hello"
 	CONST3 float64 = 3.1412
 )
 
+// +langconv
 type User struct {
 	Username string
 	Age      int
@@ -70,7 +72,7 @@ bool = "bool"
 ### Run command
 
 ```
-go-langconv -f sample.go -c config.toml -o sample.cs
+go-langconv -d dir -c config.toml -o sample.cs
 ```
 
 ### Output file
