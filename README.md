@@ -28,6 +28,13 @@ const (
 	CONST3 float64 = 3.1412
 )
 
+// +langconv enum:ItemCategory
+const (
+    Category1 = 1
+    Category2 = 2
+    Category3 = 3
+)
+
 // +langconv
 type User struct {
 	Username string
@@ -41,9 +48,21 @@ type User struct {
 ConstTemplate = '''
 public static partial class Constant
 {
-{{ range . -}}
+{{ range .ConstDeclList -}}
 {{ "    " -}} public const {{ typeconv .Type }} {{ .Name }} = {{ .Value }};
 {{ end -}}
+}
+'''
+
+EnumTemplate = '''
+public static partial class Constant
+{
+    public enum {{ .Name }}
+    {
+{{ range .ConstDeclList -}}
+{{ "        " -}} {{ .Name }} = {{ .Value }},
+{{ end -}}
+{{ "    " -}} }
 }
 '''
 
@@ -80,6 +99,15 @@ go-langconv -d dir -c config.toml -o sample.cs
 ```cs
 public static partial class Constant
 {
+    public enum ItemCategory
+    {
+        Category1 = 1,
+        Category2 = 2,
+        Category3 = 3,
+    }
+}
+public static partial class Constant
+{
     public const int CONST1 = 1;
     public const string CONST2 = "hello hello hello";
     public const double CONST3 = 3.1412;
@@ -89,35 +117,4 @@ public class User
     public string Username;
     public int Age;
 }
-```
-
-## Other config example
-
-### for Java
-
-```toml
-ConstTemplate = '''
-public class Constant {
-{{ range . -}}
-{{ "    " -}} public static final {{ typeconv .Type }} {{ .Name }} = {{ .Value }};
-{{ end -}}
-}
-'''
-
-StructTemplate = '''
-public class {{ .Name }} {
-{{ range .Fields -}}
-{{ "    " -}} public {{ typeconv .Type }} {{ .Name }};
-{{ end -}}
-}
-'''
-
-[Typemap]
-int = "int"
-int32 = "int"
-int64 = "long"
-float32 = "float"
-float64 = "double"
-string = "String"
-bool = "boolean"
 ```

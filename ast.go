@@ -3,10 +3,17 @@ package main
 import (
 	"go/ast"
 	"go/token"
+	"regexp"
 	"strings"
 )
 
 const CommentPrefix = "+langconv"
+
+type ConstDeclGroup struct {
+	Name          string
+	IsEnum        bool
+	ConstDeclList []*ConstDecl
+}
 
 type ConstDecl struct {
 	Name  string
@@ -14,7 +21,7 @@ type ConstDecl struct {
 	Value string
 }
 
-func NewConstDecl(decl ast.Decl) []*ConstDecl {
+func NewConstDeclGroup(decl ast.Decl) *ConstDeclGroup {
 	// validate const decl
 	tdecl, ok := decl.(*ast.GenDecl)
 	if !ok || tdecl.Tok != token.CONST || tdecl.Doc == nil {
@@ -25,8 +32,18 @@ func NewConstDecl(decl ast.Decl) []*ConstDecl {
 	if strings.Index(comment, CommentPrefix) == -1 {
 		return nil
 	}
+	// create ConstDeclGroup
+	g := &ConstDeclGroup{
+		ConstDeclList: []*ConstDecl{},
+	}
+	// parse enum option
+	r := regexp.MustCompile(`\senum:(\S+)\s`)
+	matched := r.FindAllStringSubmatch(comment, -1)
+	if len(matched) > 0 {
+		g.IsEnum = true
+		g.Name = matched[0][1]
+	}
 	// create ConstDecl
-	consts := []*ConstDecl{}
 	for _, s := range tdecl.Specs {
 		ts, ok := s.(*ast.ValueSpec)
 		if !ok {
@@ -49,9 +66,9 @@ func NewConstDecl(decl ast.Decl) []*ConstDecl {
 				c.Value = v.Name
 			}
 		}
-		consts = append(consts, c)
+		g.ConstDeclList = append(g.ConstDeclList, c)
 	}
-	return consts
+	return g
 }
 
 type StructDecl struct {

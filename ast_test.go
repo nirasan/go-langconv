@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestNewConstDecl(t *testing.T) {
+func TestNewConstDeclGroup(t *testing.T) {
 	src := `
 package main
 // +langconv
@@ -15,7 +15,7 @@ const (
 	CONST_INT int32 = 1
 	CONST_STRING string = "hello"
 )
-// +langconv
+// +langconv enum:MyEnum
 const CONST_SINGLE bool = true
 // +langconv
 var VAR1 = 1
@@ -28,34 +28,34 @@ var VAR1 = 1
 
 	ast.Print(fset, f)
 
-	var cds []*ConstDecl
+	var g *ConstDeclGroup
 	var cd *ConstDecl
 
-	cds = NewConstDecl(f.Decls[0])
-	if len(cds) != 2 {
-		t.Fatal("invalid length", len(cds))
+	g = NewConstDeclGroup(f.Decls[0])
+	if len(g.ConstDeclList) != 2 || g.IsEnum {
+		t.Fatalf("invalid struct: %v", g)
 	}
-	cd = cds[0]
+	cd = g.ConstDeclList[0]
 	if cd.Name != "CONST_INT" || cd.Type != "int32" || cd.Value != "1" {
 		t.Error("invalid ConstDecl", cd.Name, cd.Type, cd.Value)
 	}
-	cd = cds[1]
+	cd = g.ConstDeclList[1]
 	if cd.Name != "CONST_STRING" || cd.Type != "string" || cd.Value != `"hello"` {
 		t.Error("invalid ConstDecl", cd.Name, cd.Type, cd.Value)
 	}
 
-	cds = NewConstDecl(f.Decls[1])
-	if len(cds) != 1 {
-		t.Fatal("invalid length", len(cds))
+	g = NewConstDeclGroup(f.Decls[1])
+	if len(g.ConstDeclList) != 1 || !g.IsEnum || g.Name != "MyEnum" {
+		t.Fatalf("invalid struct: %+v", g)
 	}
-	cd = cds[0]
+	cd = g.ConstDeclList[0]
 	if cd.Name != "CONST_SINGLE" || cd.Type != "bool" || cd.Value != "true" {
 		t.Error("invalid ConstDecl", cd.Name, cd.Type, cd.Value)
 	}
 
-	cds = NewConstDecl(f.Decls[2])
-	if cds != nil {
-		t.Error("cast error", cds)
+	g = NewConstDeclGroup(f.Decls[2])
+	if g != nil {
+		t.Error("cast error", g)
 	}
 }
 

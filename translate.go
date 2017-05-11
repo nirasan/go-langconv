@@ -6,7 +6,7 @@ import (
 	"text/template"
 )
 
-func TranslateConst(c []*ConstDecl, tmpltext string, typemap map[string]string) string {
+func TranslateConstGroup(c *ConstDeclGroup, tmpltext string, typemap map[string]string) string {
 	return translateBase(c, tmpltext, typemap)
 }
 

@@ -17,21 +17,24 @@ var typemap = map[string]string{
 	"bool":    "bool",
 }
 
-func TestTranslateConst(t *testing.T) {
+func TestTranslateConstGroup(t *testing.T) {
 	consts := []*ConstDecl{
 		&ConstDecl{Name: "CONST1", Type: "int32", Value: "100"},
 		&ConstDecl{Name: "CONST2", Type: "float32", Value: "3.14"},
 		&ConstDecl{Name: "CONST3", Type: "string", Value: `"hello world"`},
 	}
+	g := &ConstDeclGroup{
+		ConstDeclList: consts,
+	}
 	tmpl := `
 public static partial class Constant
 {
-{{ range . -}}
+{{ range .ConstDeclList -}}
 {{ "    " -}} public const {{ typeconv .Type }} {{ .Name }} = {{ .Value }};
 {{ end -}}
 }
 `
-	out := TranslateConst(consts, tmpl, typemap)
+	out := TranslateConstGroup(g, tmpl, typemap)
 
 	expect := `
 public static partial class Constant
@@ -44,6 +47,47 @@ public static partial class Constant
 
 	if out != expect {
 		t.Error("invalid output", out)
+	}
+}
+
+func TestTranslateConstGroup2(t *testing.T) {
+	consts := []*ConstDecl{
+		&ConstDecl{Name: "CONST1", Type: "int32", Value: "1"},
+		&ConstDecl{Name: "CONST2", Type: "int32", Value: "2"},
+		&ConstDecl{Name: "CONST3", Type: "int32", Value: "3"},
+	}
+	g := &ConstDeclGroup{
+		Name:          "MyEnum",
+		IsEnum:        true,
+		ConstDeclList: consts,
+	}
+	tmpl := `
+public static partial class Constant
+{
+    public enum {{ .Name }}
+    {
+{{ range .ConstDeclList -}}
+{{ "        " -}} {{ .Name }} = {{ .Value }},
+{{ end -}}
+{{ "    " -}} }
+}
+`
+	out := TranslateConstGroup(g, tmpl, typemap)
+
+	expect := `
+public static partial class Constant
+{
+    public enum MyEnum
+    {
+        CONST1 = 1,
+        CONST2 = 2,
+        CONST3 = 3,
+    }
+}
+`
+
+	if out != expect {
+		t.Errorf("invalid output\n\n%s\n\n%s\n", expect, out)
 	}
 }
 

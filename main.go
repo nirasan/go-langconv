@@ -20,11 +20,12 @@ var dirFlag = flag.String("d", "", "source dir")
 var configFlag = flag.String("c", "", "config file")
 var outputFlag = flag.String("o", "", "output file")
 
-var constDeclList [][]*ConstDecl
+var constDeclGroupList []*ConstDeclGroup
 var structDeclList []*StructDecl
 
 type Config struct {
 	ConstTemplate  string
+	EnumTemplate   string
 	StructTemplate string
 	Typemap        map[string]string
 }
@@ -36,7 +37,7 @@ func main() {
 	config := loadConfig()
 
 	// parse go files
-	constDeclList = [][]*ConstDecl{}
+	constDeclGroupList = []*ConstDeclGroup{}
 	structDeclList = []*StructDecl{}
 	filepath.Walk(*dirFlag, walker)
 
@@ -44,15 +45,19 @@ func main() {
 	fp := newFile(*outputFlag)
 	defer fp.Close()
 	w := bufio.NewWriter(fp)
-
-	for i := len(constDeclList) - 1; i >= 0; i-- {
-		cd := constDeclList[i]
-		s := TranslateConst(cd, config.ConstTemplate, config.Typemap)
+	for i := len(constDeclGroupList) - 1; i >= 0; i-- {
+		g := constDeclGroupList[i]
+		var t string
+		if g.IsEnum {
+			t = config.EnumTemplate
+		} else {
+			t = config.ConstTemplate
+		}
+		s := TranslateConstGroup(g, t, config.Typemap)
 		if _, e := w.WriteString(s); e != nil {
 			log.Fatal(e)
 		}
 	}
-
 	for i := len(structDeclList) - 1; i >= 0; i-- {
 		sd := structDeclList[i]
 		s := TranslateStruct(sd, config.StructTemplate, config.Typemap)
@@ -80,8 +85,8 @@ func walker(path string, info os.FileInfo, err error) error {
 		}
 		switch tdecl.Tok {
 		case token.CONST:
-			if cd := NewConstDecl(decl); cd != nil {
-				constDeclList = append(constDeclList, cd)
+			if g := NewConstDeclGroup(decl); g != nil {
+				constDeclGroupList = append(constDeclGroupList, g)
 			}
 		case token.TYPE:
 			if sd := NewStructDecl(decl); sd != nil {
