@@ -5,17 +5,15 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"bufio"
-
-	"github.com/naoina/toml"
 )
 
+var classFlag = flag.String("class", "LangConv", "output file class")
 var dirFlag = flag.String("d", "", "source dir")
 var configFlag = flag.String("c", "", "config file")
 var outputFlag = flag.String("o", "", "output file")
@@ -23,49 +21,42 @@ var outputFlag = flag.String("o", "", "output file")
 var constDeclGroupList []*ConstDeclGroup
 var structDeclList []*StructDecl
 
-type Config struct {
-	ConstTemplate  string
-	EnumTemplate   string
-	StructTemplate string
-	Typemap        map[string]string
-}
-
 func main() {
 	flag.Parse()
 
 	// load config
-	config := loadConfig()
+	config := loadConfig(*configFlag)
 
 	// parse go files
 	constDeclGroupList = []*ConstDeclGroup{}
 	structDeclList = []*StructDecl{}
 	filepath.Walk(*dirFlag, walker)
 
+	// create template data
+	data := TemplateData{
+		ClassName:              *classFlag,
+		ConstDeclGroupList:     []*ConstDeclGroup{},
+		EnumConstDeclGroupList: []*ConstDeclGroup{},
+		StructDeclList:         []*StructDecl{},
+	}
+	for i := len(constDeclGroupList) - 1; i >= 0; i-- {
+		g := constDeclGroupList[i]
+		if g.IsEnum {
+			data.EnumConstDeclGroupList = append(data.EnumConstDeclGroupList, g)
+		} else {
+			data.ConstDeclGroupList = append(data.ConstDeclGroupList, g)
+		}
+	}
+	data.StructDeclList = structDeclList
+
 	// write output file
 	fp := newFile(*outputFlag)
 	defer fp.Close()
+	out := renderTemplate(data, config.Template, config.Typemap)
 	w := bufio.NewWriter(fp)
-	for i := len(constDeclGroupList) - 1; i >= 0; i-- {
-		g := constDeclGroupList[i]
-		var t string
-		if g.IsEnum {
-			t = config.EnumTemplate
-		} else {
-			t = config.ConstTemplate
-		}
-		s := TranslateConstGroup(g, t, config.Typemap)
-		if _, e := w.WriteString(s); e != nil {
-			log.Fatal(e)
-		}
+	if _, e := w.WriteString(out); e != nil {
+		log.Fatal(e)
 	}
-	for i := len(structDeclList) - 1; i >= 0; i-- {
-		sd := structDeclList[i]
-		s := TranslateStruct(sd, config.StructTemplate, config.Typemap)
-		if _, e := w.WriteString(s); e != nil {
-			log.Fatal(e)
-		}
-	}
-
 	w.Flush()
 }
 
@@ -95,22 +86,6 @@ func walker(path string, info os.FileInfo, err error) error {
 		}
 	}
 	return nil
-}
-
-func loadConfig() Config {
-	confData, err := os.Open(*configFlag)
-	if err != nil {
-		panic(err)
-	}
-	buf, err := ioutil.ReadAll(confData)
-	if err != nil {
-		panic(err)
-	}
-	var config Config
-	if err := toml.Unmarshal(buf, &config); err != nil {
-		panic(err)
-	}
-	return config
 }
 
 func newFile(fn string) *os.File {
