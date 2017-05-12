@@ -1,29 +1,28 @@
-ConstTemplate = '''
-public static partial class Constant
+Template = '''
+public static class {{ .ClassName }}
 {
+{{ range .ConstDeclGroupList -}}
 {{ range .ConstDeclList -}}
 {{ "    " -}} public const {{ typeconv .Type }} {{ .Name }} = {{ .Value }};
 {{ end -}}
-}
-'''
+{{ end -}}
 
-EnumTemplate = '''
-public static partial class Constant
-{
-    public enum {{ .Name }}
-    {
+{{ range .EnumConstDeclGroupList -}}
+{{ "    public enum " -}} {{ .Name }}
+{{ "    " -}} {
 {{ range .ConstDeclList -}}
 {{ "        " -}} {{ .Name }} = {{ .Value }},
 {{ end -}}
 {{ "    " -}} }
-}
-'''
+{{ end -}}
 
-StructTemplate = '''
-public class {{ .Name }}
-{
+{{ range .StructDeclList -}}
+{{ "    public class " -}} {{ .Name }}
+{{ "    " -}} {
 {{ range .Fields -}}
-{{ "    " -}} public {{ typeconv .Type }} {{- if .IsArray -}} [] {{- end }} {{ .Name }};
+{{ "        " -}} public {{ typeconv .Type }} {{- if .IsArray -}} [] {{- end }} {{ .Name }};
+{{ end -}}
+{{ "    " -}} }
 {{ end -}}
 }
 '''

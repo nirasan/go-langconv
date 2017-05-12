@@ -1,0 +1,9 @@
+[Typemap]
+int = "int"
+int32 = "int"
+int64 = "long"
+uint = "uint"
+uint32 = "uint"
+uint64 = "ulong"
+string = "string"
+bool = "bool"
