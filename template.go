@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
-	"html/template"
 	"log"
+	"text/template"
 )
 
 type TemplateData struct {
