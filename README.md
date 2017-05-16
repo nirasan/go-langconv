@@ -11,7 +11,7 @@ go install github.com/nirasan/go-langconv
 ## How to use
 
 ```
-go-langconv -d {DIRNAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME}
+go-langconv -d {DIRNAME} -c {CONFIG_FILENAME} -o {OUTPUT_FILENAME} -class {OUTPUT_CLASSNAME}
 ```
 
 ## Example
@@ -45,32 +45,31 @@ type User struct {
 ### Config file for C Sharp
 
 ```toml
-ConstTemplate = '''
-public static partial class Constant
+Template = '''
+public static class {{ .ClassName }}
 {
+{{ range .ConstDeclGroupList -}}
 {{ range .ConstDeclList -}}
 {{ "    " -}} public const {{ typeconv .Type }} {{ .Name }} = {{ .Value }};
 {{ end -}}
-}
-'''
+{{ end -}}
 
-EnumTemplate = '''
-public static partial class Constant
-{
-    public enum {{ .Name }}
-    {
+{{ range .EnumConstDeclGroupList -}}
+{{ "    public enum " -}} {{ .Name }}
+{{ "    " -}} {
 {{ range .ConstDeclList -}}
 {{ "        " -}} {{ .Name }} = {{ .Value }},
 {{ end -}}
 {{ "    " -}} }
-}
-'''
+{{ end -}}
 
-StructTemplate = '''
-public class {{ .Name }}
-{
+{{ range .StructDeclList -}}
+{{ "    public class " -}} {{ .Name }}
+{{ "    " -}} {
 {{ range .Fields -}}
-{{ "    " -}} public {{ typeconv .Type }} {{ .Name }};
+{{ "        " -}} public {{ typeconv .Type }} {{- if .IsArray -}} [] {{- end }} {{ .Name }};
+{{ end -}}
+{{ "    " -}} }
 {{ end -}}
 }
 '''
@@ -91,30 +90,27 @@ bool = "bool"
 ### Run command
 
 ```
-go-langconv -d dir -c config.toml -o sample.cs
+go-langconv -d dir -c config.toml -o sample.cs -class MyClass
 ```
 
 ### Output file
 
 ```cs
-public static partial class Constant
+public static class MyClass
 {
+    public const int CONST1 = 1;
+    public const string CONST2 = "hello hello hello";
+    public const double CONST3 = 3.1412;
     public enum ItemCategory
     {
         Category1 = 1,
         Category2 = 2,
         Category3 = 3,
     }
-}
-public static partial class Constant
-{
-    public const int CONST1 = 1;
-    public const string CONST2 = "hello hello hello";
-    public const double CONST3 = 3.1412;
-}
-public class User
-{
-    public string Username;
-    public int Age;
+    public class User
+    {
+        public string Username;
+        public long Age;
+    }
 }
 ```
