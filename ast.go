@@ -110,6 +110,9 @@ func NewStructDecl(decl ast.Decl) *StructDecl {
 	}
 	// get fields
 	for _, f := range t.Fields.List {
+		if f.Names == nil {
+			continue
+		}
 		// get field name
 		sdf := StructDeclField{
 			Name: f.Names[0].Name,
